@@ -4,16 +4,26 @@ import { services } from "../data/services";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 
+
+// Hero image
+import heroImage from "../assets/hero-photo.webp";
+
+// Category images
+import nailsImg from "../assets/nails.webp";
+import hairImg from "../assets/hair.webp";
+import makeupImg from "../assets/makeup.jpg";
+import spaImg from "../assets/spa.jfif";
+
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import "swiper/css/autoplay";
 
 const categories = [
-  { name: "Nails", emoji: "💅" },
-  { name: "Hair", emoji: "💇‍♀️" },
-  { name: "Makeup", emoji: "💄" },
-  { name: "Spa", emoji: "💆" }
+  { name: "Nails",  image: nailsImg },
+  { name: "Hair", image: hairImg },
+  { name: "Makeup", image: makeupImg },
+  { name: "Spa", image: spaImg }
 ];
 
 const testimonials = [
@@ -49,20 +59,48 @@ function Home() {
     <div style={styles.page}>
       <div style={styles.container}>
         {/* Hero */}
-        <div style={styles.hero}>
-          <h1 style={styles.heroTitle}>Welcome to BeautyBook !</h1>
-          <p style={styles.heroSubtitle}>
-            Book all your beauty appointments in one place: nails, hair, makeup, spa, and more!
-          </p>
-          <button
-            style={styles.bookBtn}
-            onClick={() => navigate("/services")}
-          >
-            Book Now
-          </button>
+        <div
+          style={{
+            ...styles.hero,
+            backgroundImage: `url(${heroImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            position: "relative",
+            color: "#fff",
+            padding: "80px 20px",
+            borderRadius: "20px",
+          }}
+        >
+          {/* Overlay */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              backgroundColor: "rgba(0,0,0,0.35)",
+              borderRadius: "20px",
+            }}
+          ></div>
+
+          {/* Hero content */}
+          <div style={{ position: "relative", zIndex: 2, maxWidth: "700px", margin: "0 auto" }}>
+            <h1 style={styles.heroTitle}>Welcome to BeautyBook !</h1>
+            <p style={styles.heroSubtitle}>
+              Book all your beauty appointments in one place: nails, hair, makeup, spa, and more!
+            </p>
+            <button
+              style={styles.bookBtn}
+              onClick={() => navigate("/services")}
+            >
+              Book Now
+            </button>
+          </div>
         </div>
 
-        {/*Daily Inspiration */}
+        {/* Daily Inspiration */}
         {tip && (
           <div style={styles.tipBox} className="tip-animation">
             💡 <strong>Daily Inspiration:</strong>{" "}
@@ -74,19 +112,25 @@ function Home() {
         {/* Categories */}
         <h2 style={styles.sectionTitle}>Explore Our Categories 🌸</h2>
         <div style={styles.categories}>
-         {categories.map(c => (
-  <div
-    key={c.name}
-    style={styles.categoryCard}
-    className="card-hover"
-    onClick={() => navigate("/services", { state: { category: c.name } })}
-  >
-    <span style={styles.categoryEmoji}>{c.emoji}</span>
-    <h3>{c.name}</h3>
-  </div>
-))}
-
-        
+          {categories.map(c => (
+            <div
+              key={c.name}
+              style={{
+                ...styles.categoryCard,
+                backgroundImage: `url(${c.image})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                color: "#fff",
+              }}
+              className="card-hover"
+              onClick={() => navigate("/services", { state: { category: c.name } })}
+            >
+              <div style={{ backgroundColor: "rgba(0,0,0,0.4)", borderRadius: "14px", padding: "10px" }}>
+                <span style={styles.categoryEmoji}>{c.emoji}</span>
+                <h3>{c.name}</h3>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Trending Services */}
@@ -144,8 +188,8 @@ const styles = {
   page: { minHeight: "100vh", background: "#fff0f6", padding: "40px 20px" },
   container: { maxWidth: "1000px", margin: "0 auto", textAlign: "center" },
   hero: { marginBottom: "40px" },
-  heroTitle: { fontSize: "36px", color: "#d63384", fontWeight: "700", marginBottom: "10px" },
-  heroSubtitle: { fontSize: "18px", color: "#555", marginBottom: "20px" },
+  heroTitle: { fontSize: "36px", fontWeight: "700", marginBottom: "10px" },
+  heroSubtitle: { fontSize: "18px", marginBottom: "20px" },
   bookBtn: {
     backgroundColor: "#d63384",
     color: "#fff",
@@ -183,13 +227,16 @@ const styles = {
   sectionTitle: { fontSize: "28px", color: "#d63384", marginBottom: "20px", marginTop: "40px" },
   categories: { display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "20px", marginBottom: "40px" },
   categoryCard: {
-    backgroundColor: "#fff",
     borderRadius: "14px",
     padding: "20px",
     width: "140px",
+    height: "140px",
     boxShadow: "0 8px 20px rgba(0,0,0,0.12)",
     cursor: "pointer",
     textAlign: "center",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
   categoryEmoji: { fontSize: "28px", marginBottom: "8px" },
   card: {

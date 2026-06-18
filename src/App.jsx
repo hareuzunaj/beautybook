@@ -5,7 +5,10 @@ import Home from "./pages/Home";
 import Services from "./pages/Services";
 import Book from "./pages/Book";
 import MyAppointments from "./pages/Myappointments";
-import AdminLogin from "./pages/AdminLogin"; // <-- login wrapper
+import AdminLogin from "./pages/AdminLogin"; 
+import BeautyChatBot from "./components/BeautyChatBot";
+
+
 
 function App() {
   return (
@@ -16,8 +19,12 @@ function App() {
         <Route path="/services" element={<Services />} />
         <Route path="/book" element={<Book />} />
         <Route path="/appointments" element={<MyAppointments />} />
-        <Route path="/admin" element={<AdminLogin />} /> {/* now goes through login */}
+   
+        <Route path="/admin" element={<AdminLogin />} /> 
+        
+    
       </Routes>
+            <BeautyChatBot /> 
     </>
   );
 }

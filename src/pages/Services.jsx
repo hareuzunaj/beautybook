@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { services } from "../data/services";
+import { services as fallbackServices } from "../data/services";
+import { api } from "../api";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -9,23 +10,34 @@ function Services() {
   const [category, setCategory] = useState("All");
   const [hoveredId, setHoveredId] = useState(null);
   const [favorites, setFavorites] = useState([]);
-  const [displayed, setDisplayed] = useState(services);
   const [ratings, setRatings] = useState({});
   const [bookedServices, setBookedServices] = useState([]);
+  const [services, setServices] = useState(fallbackServices);
 
-  // Load ratings from localStorage
+  // Load ratings + booked from localStorage
   useEffect(() => {
     const savedRatings = localStorage.getItem("ratings");
     if (savedRatings) setRatings(JSON.parse(savedRatings));
 
+    const savedFavorites = localStorage.getItem("favoriteServices");
+    if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
+
     const booked = localStorage.getItem("bookedServices");
     if (booked) setBookedServices(JSON.parse(booked));
+
+    api.services()
+      .then(setServices)
+      .catch(() => setServices(fallbackServices));
   }, []);
 
   // Save ratings
   useEffect(() => {
     localStorage.setItem("ratings", JSON.stringify(ratings));
   }, [ratings]);
+
+  useEffect(() => {
+    localStorage.setItem("favoriteServices", JSON.stringify(favorites));
+  }, [favorites]);
 
   // Category from navigation
   useEffect(() => {
@@ -34,14 +46,12 @@ function Services() {
     }
   }, [location.state]);
 
+  // Filtered services 
   const filtered =
     category === "All"
       ? services
       : services.filter(s => s.category === category);
-
-  useEffect(() => {
-    setDisplayed(filtered);
-  }, [category]);
+  const categories = ["All", ...Array.from(new Set(services.map((service) => service.category).filter(Boolean)))];
 
   const toggleFavorite = (id) => {
     setFavorites(prev =>
@@ -49,9 +59,8 @@ function Services() {
     );
   };
 
-  // Rate only if booked
   const rateService = (id, value) => {
-    if (!bookedServices.includes(id)) {
+    if (!bookedServices.map(Number).includes(id)) {
       alert("You can only rate services you booked!");
       return;
     }
@@ -61,7 +70,6 @@ function Services() {
     }));
   };
 
-  // Motion variants
   const containerVariants = {
     hidden: {},
     visible: { transition: { staggerChildren: 0.1 } }
@@ -83,7 +91,7 @@ function Services() {
 
         {/* Category Filters */}
         <div style={styles.filters}>
-          {["All", "Nails", "Hair", "Makeup", "Spa"].map(cat => (
+          {categories.map(cat => (
             <button
               key={cat}
               onClick={() => setCategory(cat)}
@@ -105,7 +113,7 @@ function Services() {
           animate="visible"
         >
           <AnimatePresence>
-            {displayed.map(service => (
+            {filtered.map(service => (
               <motion.div
                 key={service.id}
                 variants={cardVariants}
@@ -134,18 +142,18 @@ function Services() {
                 <h3 style={styles.name}>{service.name}</h3>
                 <p style={styles.desc}>{service.description}</p>
 
-                {/* Rating (click only if booked) */}
+                {/* Rating */}
                 <div style={styles.rating}>
                   {[1, 2, 3, 4, 5].map(star => (
                     <motion.span
                       key={star}
                       whileHover={
-                        bookedServices.includes(service.id)
+                        bookedServices.map(Number).includes(service.id)
                           ? { scale: 1.3 }
                           : {}
                       }
                       whileTap={
-                        bookedServices.includes(service.id)
+                        bookedServices.map(Number).includes(service.id)
                           ? { scale: 0.9 }
                           : {}
                       }
@@ -156,10 +164,10 @@ function Services() {
                           (ratings[service.id] || 0) >= star
                             ? "#f5b301"
                             : "#ddd",
-                        cursor: bookedServices.includes(service.id)
+                        cursor: bookedServices.map(Number).includes(service.id)
                           ? "pointer"
                           : "not-allowed",
-                        opacity: bookedServices.includes(service.id) ? 1 : 0.5
+                        opacity: bookedServices.map(Number).includes(service.id) ? 1 : 0.5
                       }}
                     >
                       ★
@@ -245,7 +253,8 @@ const styles = {
     boxShadow: "0 10px 28px rgba(0,0,0,0.12)",
     display: "flex",
     flexDirection: "column",
-    position: "relative"
+    position: "relative",
+    transition: "0.3s"
   },
   cardHover: {
     transform: "translateY(-8px)"

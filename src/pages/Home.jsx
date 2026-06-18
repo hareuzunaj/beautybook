@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { services } from "../data/services";
+import { services as fallbackServices } from "../data/services";
+import { api } from "../api";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 
@@ -19,12 +20,14 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import "swiper/css/autoplay";
 
-const categories = [
-  { name: "Nails",  image: nailsImg },
-  { name: "Hair", image: hairImg },
-  { name: "Makeup", image: makeupImg },
-  { name: "Spa", image: spaImg }
-];
+const categoryImageFor = (category) => {
+  const value = category.toLowerCase();
+  if (value.includes("nail")) return nailsImg;
+  if (value.includes("hair") || value.includes("floke")) return hairImg;
+  if (value.includes("makeup")) return makeupImg;
+  if (value.includes("spa")) return spaImg;
+  return heroImage;
+};
 
 const testimonials = [
   { name: "Sara K.", text: "Absolutely loved my manicure! 💖" },
@@ -36,6 +39,7 @@ function Home() {
   const navigate = useNavigate();
   const [tip, setTip] = useState("");
   const [trending, setTrending] = useState([]);
+  const [categoryCards, setCategoryCards] = useState([]);
 
   const fetchTip = () => {
     fetch("https://type.fit/api/quotes")
@@ -51,8 +55,21 @@ function Home() {
 
   useEffect(() => {
     fetchTip();
-    const popularServices = services.filter(s => s.popular);
-    setTrending(popularServices);
+    api.services()
+      .then((items) => {
+        setTrending(items.filter((service) => service.popular));
+        setCategoryCards(Array.from(new Set(items.map((service) => service.category).filter(Boolean))).map((name) => ({
+          name,
+          image: categoryImageFor(name)
+        })));
+      })
+      .catch(() => {
+        setTrending(fallbackServices.filter((service) => service.popular));
+        setCategoryCards(Array.from(new Set(fallbackServices.map((service) => service.category))).map((name) => ({
+          name,
+          image: categoryImageFor(name)
+        })));
+      });
   }, []);
 
   return (
@@ -112,7 +129,7 @@ function Home() {
         {/* Categories */}
         <h2 style={styles.sectionTitle}>Explore Our Categories 🌸</h2>
         <div style={styles.categories}>
-          {categories.map(c => (
+          {categoryCards.map(c => (
             <div
               key={c.name}
               style={{

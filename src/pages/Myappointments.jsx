@@ -1,44 +1,82 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { api } from "../api";
 
 function MyAppointments() {
   const [appointments, setAppointments] = useState([]);
+  const [phone, setPhone] = useState(localStorage.getItem("lastBookingPhone") || "");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const loadAppointments = async (phoneValue = phone) => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const data = await api.appointments(phoneValue);
+      setAppointments(data);
+      if (phoneValue) {
+        localStorage.setItem("lastBookingPhone", phoneValue);
+      }
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const data = JSON.parse(localStorage.getItem("appointments")) || [];
-    setAppointments(data);
+    loadAppointments(phone);
   }, []);
 
-  const cancelAppointment = (id) => {
-    const updated = appointments.filter(a => a.id !== id);
-    setAppointments(updated);
-    localStorage.setItem("appointments", JSON.stringify(updated));
+  const cancelAppointment = async (id) => {
+    try {
+      await api.deleteAppointment(id);
+      setAppointments((current) => current.filter((appointment) => appointment.id !== id));
+    } catch (requestError) {
+      setError(requestError.message);
+    }
   };
 
   return (
     <div style={styles.page}>
       <div style={styles.container}>
-        <h1 style={styles.title}>My Appointments 💖</h1>
+        <h1 style={styles.title}>My Appointments</h1>
 
-        {appointments.length === 0 ? (
+        <div style={styles.lookup}>
+          <input
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            placeholder="Enter your phone number"
+            style={styles.lookupInput}
+          />
+          <button onClick={() => loadAppointments(phone)} style={styles.lookupBtn}>
+            Search
+          </button>
+        </div>
+
+        {loading && <p style={styles.empty}>Loading appointments...</p>}
+        {error && <p style={styles.error}>{error}</p>}
+
+        {!loading && appointments.length === 0 ? (
           <div style={styles.emptyContainer}>
             <motion.div
               animate={{ y: [0, -15, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               style={styles.illustration}
             >
-              ✨
+              *
             </motion.div>
             <p style={styles.emptyText}>
               You have no appointments yet.<br />
               Book your first beauty session now!
             </p>
           </div>
-        ) : (
+        ) : !loading && (
           <div style={styles.list}>
-            {appointments.map((a) => (
+            {appointments.map((appointment) => (
               <motion.div
-                key={a.id}
+                key={appointment.id}
                 style={styles.card}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -47,15 +85,18 @@ function MyAppointments() {
               >
                 <div style={styles.info}>
                   <p style={styles.service}>
-                    <b>{a.service}</b> for <b>{a.name}</b>
+                    <b>{appointment.service}</b> for <b>{appointment.name}</b>
                   </p>
                   <p style={styles.datetime}>
-                    {a.date} at {a.time}
+                    {appointment.date} at {appointment.time}
+                  </p>
+                  <p style={styles.meta}>
+                    {appointment.serviceCategory || "Beauty service"} - {appointment.status || "Planned"} - {appointment.phone || "No phone"}
                   </p>
                 </div>
                 <button
                   style={styles.cancelBtn}
-                  onClick={() => cancelAppointment(a.id)}
+                  onClick={() => cancelAppointment(appointment.id)}
                 >
                   Cancel
                 </button>
@@ -86,6 +127,41 @@ const styles = {
     marginBottom: "30px",
     fontWeight: "700"
   },
+  lookup: {
+    display: "flex",
+    gap: "10px",
+    margin: "0 auto 24px",
+    maxWidth: "520px",
+    flexWrap: "wrap"
+  },
+  lookupInput: {
+    flex: "1 1 260px",
+    border: "1px solid #e5e7eb",
+    borderRadius: "14px",
+    padding: "12px 14px",
+    fontSize: "15px"
+  },
+  lookupBtn: {
+    border: "none",
+    borderRadius: "14px",
+    padding: "12px 18px",
+    background: "#d63384",
+    color: "#fff",
+    fontWeight: "700",
+    cursor: "pointer"
+  },
+  error: {
+    color: "#be123c",
+    textAlign: "center",
+    marginBottom: "18px",
+    fontWeight: "700"
+  },
+  empty: {
+    textAlign: "center",
+    color: "#777",
+    fontSize: "16px",
+    marginBottom: "18px"
+  },
   emptyContainer: {
     display: "flex",
     flexDirection: "column",
@@ -115,6 +191,8 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: "16px",
+    flexWrap: "wrap",
     boxShadow: "0 8px 20px rgba(0,0,0,0.1)"
   },
   info: {
@@ -130,6 +208,11 @@ const styles = {
   datetime: {
     fontSize: "14px",
     color: "#555",
+    margin: 0
+  },
+  meta: {
+    fontSize: "13px",
+    color: "#777",
     margin: 0
   },
   cancelBtn: {

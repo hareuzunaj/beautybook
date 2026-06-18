@@ -37,7 +37,7 @@ function Navbar() {
             <div style={styles.mobileMenu}>
               <NavLink to="/" label="Home" path={location.pathname} mobile />
               <NavLink to="/services" label="Services" path={location.pathname} mobile />
-              <NavLink to="/offers" label="Special Offers" path={location.pathname} mobile />
+              
               <NavLink to="/appointments" label="My Appointments" path={location.pathname} mobile />
               <NavLink to="/admin" label="Admin" path={location.pathname} mobile />
               <Link to="/book" style={styles.bookBtnMobile}>Book Now</Link>
